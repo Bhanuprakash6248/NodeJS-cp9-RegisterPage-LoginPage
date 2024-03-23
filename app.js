@@ -37,27 +37,26 @@ const validatePassword = password => {
 
 // API 1 ->Register
 app.post('/register', async (request, response) => {
-  const {username, name, password, gender, location} = request.body
-  const hashedPassword = await bcrypt.hash(password, 10)
-  const selectUserQuery = `
-  SELECT *
-  FROM 
-    user
-  WHERE
-    username ='${username}';
-  `;
-  const dbUser = await db.get(selectUserQuery)
+  let {username, name, password, gender, location} = request.body
+  let hashedPassword = await bcrypt.hash(password, 10)
+  let selectUserQuery = `
+      SELECT *
+      FROM 
+        user
+      WHERE
+        username ='${username}';`
+  let dbUser = await db.get(selectUserQuery)
   if (dbUser === undefined) {
-    const createQuery = `
+    let createQuery = `
       INSERT INTO
-        user(username,name,password,gender)
+        user(username,name,password,gender,location)
       VALUES(
         '${username}',
         '${name}',
         '${hashedPassword}',
         '${gender}',
         '${location}'
-      ); `;
+      ); `
     if (validatePassword(password)) {
       await db.run(createQuery)
       response.send('User created successfully')
@@ -71,7 +70,7 @@ app.post('/register', async (request, response) => {
   }
 })
 
-//API 2 -> \
+//API 2 -> \login
 app.post('/login', async (request, response) => {
   const {username, password} = request.body
   const selectUserQuery = `
@@ -95,3 +94,53 @@ app.post('/login', async (request, response) => {
     }
   }
 })
+
+//API-3
+
+app.put('/change-password', async (request, response) => {
+  const {username, oldPassword, newPassword} = request.body
+  const selectUserQuery = `
+    SELECT *
+    FROM 
+      user
+    WHERE
+      username ="${username}";
+    `
+  const dbUser = await db.get(selectUserQuery)
+  if (dbUser === undefined) {
+    // user not Resgistred
+    response.status(400)
+    response.send('user not register')
+  } else {
+    //valid user
+    const isPasswordMatched = await bcrypt.compare(oldPassword, dbuser.password)
+    if (isPasswordMatched === true) {
+      // checks the passwords
+      const passwordLength = newPassword.length
+      if (passwordLength < 5) {
+        // checks the lenght of password <5
+        response.status(400)
+        response.send('Password is too short')
+      } else {
+        //Update password
+        const encryptPassword = await bcrypt.hash(newPassword, 10)
+        const updatedPasswordQuery = `
+            UPDATE user
+            SET
+              password = '${encryptPassword}'
+            WHERE
+              username ='${username}';
+          `
+        await db.run(updatedPasswordQuery)
+        response.send(200)
+        response.send('Password updated')
+      }
+    } else {
+      // unmatched password
+      response.status(400)
+      response.send('Invalid current password')
+    }
+  }
+})
+
+module.exports = app

@@ -89,7 +89,7 @@ app.post('/login', async (request, response) => {
     if (isPasswordMatched === true) {
       response.send('Login success!')
     } else {
-      resposne.send(400)
+      response.send(400)
       response.send('Invalid password')
     }
   }
@@ -113,7 +113,7 @@ app.put('/change-password', async (request, response) => {
     response.send('user not register')
   } else {
     //valid user
-    const isPasswordMatched = await bcrypt.compare(oldPassword, dbuser.password)
+    const isPasswordMatched = await bcrypt.compare(oldPassword, dbUser.password)
     if (isPasswordMatched === true) {
       // checks the passwords
       const passwordLength = newPassword.length
